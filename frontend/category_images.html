@@ -6,49 +6,49 @@
     <title>Изображения категории</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50 transition-colors duration-300">
 
     <div id="category-images" class="container mx-auto mt-8 px-4">
-        <h2 class="text-3xl font-semibold text-center text-gray-800 mb-6">Изображения категории</h2>
+        <h2 class="text-3xl font-semibold text-center text-gray-800 dark:text-gray-100 mb-6">Изображения категории</h2>
 
         <!-- Кнопка для перехода на начальную страницу -->
         <div class="flex justify-center mb-6 space-x-4">
-            <a href="/" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+            <a href="/" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition duration-200">
                 На главную
             </a>
 
             <!-- Кнопка для скачивания всех изображений в архиве -->
-            <button id="download-all-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+            <button id="download-all-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition duration-200">
                 Скачать все изображения
             </button>
         </div>
 
         <div id="images-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for image in images %}
-            <div id="image-{{ image.id }}" class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300">
+            <div id="image-{{ image.id }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300">
                 <!-- Отображение изображения с сохранением пропорций -->
-                <div class="relative w-full h-64 bg-gray-100 rounded-lg overflow-hidden mb-4">
+                <div class="relative w-full h-64 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
                     <img src="data:image/{{ image.mime_type }};base64,{{ image.content | to_base64 }}" 
                          alt="{{ image.filename }}" 
                          class="absolute inset-0 w-full h-full object-contain" />
                 </div>
-                <p class="text-center text-gray-700 text-lg">{{ image.filename }}</p>
+                <p class="text-center text-gray-700 dark:text-gray-300 text-lg">{{ image.filename }}</p>
                 
                 <!-- Время загрузки изображения -->
-                <p class="text-center text-gray-500 text-sm mt-2">Загружено: {{ image.upload_date }}</p>
+                <p class="text-center text-gray-500 dark:text-gray-400 text-sm mt-2">Загружено: {{ image.upload_date }}</p>
         
                 <div class="flex justify-between items-center mt-4">
                     <!-- Кнопка для скачивания -->
-                    <a href="/image/{{ image.id }}/download" class="text-blue-500 hover:underline transition duration-200">Скачать</a>
+                    <a href="/image/{{ image.id }}/download" class="text-blue-500 dark:text-blue-400 hover:underline transition duration-200">Скачать</a>
         
                     <!-- Кнопка для удаления изображения -->
-                    <button class="delete-btn text-red-500 hover:underline transition duration-200" 
+                    <button class="delete-btn text-red-500 dark:text-red-400 hover:underline transition duration-200" 
                             data-image-id="{{ image.id }}" 
                             onclick="deleteImage(event, {{ image.id }})">Удалить</button>
                 </div>
             </div>
             {% else %}
-            <p class="text-center text-gray-500 col-span-3">Нет изображений в этой категории</p>
+            <p class="text-center text-gray-500 dark:text-gray-400 col-span-3">Нет изображений в этой категории</p>
             {% endfor %}
         </div>
     </div>

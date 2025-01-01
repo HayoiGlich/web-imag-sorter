@@ -63,11 +63,14 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Ошибка сети:", error);
         }
     });
-
+    
     // Удаление категории
     foldersContainer.addEventListener("click", async (event) => {
         const button = event.target.closest(".delete-category-btn");
         if (!button) return;
+
+        // Останавливаем всплытие события, чтобы избежать перехода при нажатии
+        event.stopPropagation();
 
         const categoryId = button.getAttribute("data-folder-id");
         if (!categoryId) return;
@@ -75,9 +78,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (confirm("Вы уверены, что хотите удалить эту категорию?")) {
             try {
                 const response = await fetch(`/category/${categoryId}`, { method: "DELETE" });
+
                 if (response.ok) {
                     const categoryElement = document.querySelector(`#folder-${categoryId}`);
                     if (categoryElement) categoryElement.remove();
+                    console.log(`Категория с ID ${categoryId} успешно удалена.`);
                 } else {
                     console.error("Ошибка при удалении категории.");
                 }
@@ -86,6 +91,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     });
+
+
 
     // Обработка загрузки нескольких файлов
     async function handleFiles(files) {

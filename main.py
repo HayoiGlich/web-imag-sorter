@@ -12,6 +12,7 @@ import zipfile
 import io
 import base64
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import func
 
 # Lifespan для FastAPI
 async def lifespan(app: FastAPI):
@@ -35,13 +36,27 @@ templates.env.filters["to_base64"] = to_base64
 # =====Роуты====
 @app.get('/')
 async def home(request: Request, db: AsyncSession = Depends(get_db_session)):
-    result = await db.execute(select(Category))
-    categories = result.unique().scalars().all()
+    result = await db.execute(select(Category, func.count(Image.id).label("image_count"))
+        .outerjoin(Image, Image.category_id == Category.id)
+        .group_by(Category.id))
+    
+    categories_with_counts = [
+        {
+            "id": category.id,
+            "name": category.name,
+            "description": category.description,
+            "image_count": image_count,
+        }
+        for category, image_count in result.all()
+    ]
+
     return templates.TemplateResponse(
-        'index.html', {
-            "request": request, 
-            "folders": categories
-            })
+        'index.html',
+        {
+            "request": request,
+            "folders": categories_with_counts,
+        }
+    )
 
 # Создание категории
 @app.post('/category/')

@@ -8,16 +8,16 @@ from sqlalchemy.sql import func
 class Category(Base):
     __tablename__ = 'categories'
 
-    id : Mapped[int] = mapped_column(primary_key=True,autoincrement=True)
-    name : Mapped[str] = mapped_column(String(100), unique= True, nullable= False)
+    id : Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
+    name : Mapped[str] = mapped_column(String(50), unique= True, nullable= False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
 
-    images: Mapped[list["Image"]] = relationship("Image", back_populates="category", lazy="joined")
+    images: Mapped[list["Image"]] = relationship("Image", back_populates="category")
 
 class Image(Base):
     __tablename__ = 'images'
 
-    id : Mapped[int] = mapped_column(primary_key=True,autoincrement=True)
+    id : Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
     filename : Mapped[str] = mapped_column(String(255), unique= True, nullable= False)
     content : Mapped[bytes] = mapped_column(LargeBinary)
     upload_date: Mapped[datetime] = mapped_column(
