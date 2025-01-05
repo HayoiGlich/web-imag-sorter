@@ -121,18 +121,22 @@ async def get_images(category_id: int, request: Request, db: AsyncSession = Depe
     try:
         # Запрос к базе данных для получения изображений
         result = await db.execute(
-            select(Image).where(Image.category_id == category_id).order_by(Image.upload_date.desc()))
+            select(Image).where(Image.category_id == category_id).order_by(Image.filename.asc()))
         images = result.unique().scalars().all()
 
-        if not images:
-            raise HTTPException(status_code=404, detail="Изображения не найдены для этой категории")
+        category_result = await db.execute(select(Category).where(Category.id == category_id))
+        category = category_result.unique().scalar()  # Получаем первый (и единственный) результат
+
+        # if not images:
+        #     raise HTTPException(status_code=404, detail="Изображения не найдены для этой категории")
         
         await db.commit()
         # Передаем данные в шаблон
         return templates.TemplateResponse("category_images.html", {
             "request": request,
             "images": images,
-            "category_id": category_id
+            "category_id": category_id,
+            "folder_name": category.name
         })
         
     except Exception as e:
