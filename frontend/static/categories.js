@@ -71,7 +71,7 @@ export function initializeCategories() {
 
             if (confirm("Вы уверены, что хотите удалить эту категорию?")) {
                 try {
-                    const response = await fetch(`/category/${categoryId}`, { method: "DELETE" });
+                    const response = fetch(`/category/${categoryId}`, { method: "DELETE" });
 
                     if (response.ok) {
                         const categoryElement = document.querySelector(`#folder-${categoryId}`);
