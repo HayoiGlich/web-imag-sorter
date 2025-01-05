@@ -161,21 +161,31 @@ async def download_image(image_id: int, db: AsyncSession = Depends(get_db_sessio
 # Скачивание всех изображений из категории как ZIP
 @app.get("/category/{category_id}/download")
 async def download_category_images(category_id: int, db: AsyncSession = Depends(get_db_session)):
-    # Получаем все изображения из категории
-    result = await db.execute(select(Image).where(Image.category_id == category_id))
-    images = result.unique().scalars().all()
+    # Проверка существования категории
+    category_result = await db.execute(select(Category).where(Category.id == category_id))
+    category = category_result.scalar()
 
-    if not images:
-        raise HTTPException(status_code=404, detail="Изображения не найдены для этой категории")
+    if not category:
+        raise HTTPException(status_code=404, detail="Категория не найдена")
 
-    # Создаём архив
+    # Получение изображений для категории
+    images_result = await db.execute(select(Image).where(Image.category_id == category_id))
+    images = images_result.scalars().all()
+
+    # Создание архива
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for image in images:
             zip_file.writestr(image.filename, image.content)
     zip_buffer.seek(0)
 
-    return StreamingResponse(zip_buffer, media_type="application/zip", headers={f"Content-Disposition": "attachment; filename={category.name}_images.zip"})
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f"attachment; filename={category.name}_images.zip"
+        }
+    )
 
 # Удаление изображения
 @app.delete("/image/{image_id}")

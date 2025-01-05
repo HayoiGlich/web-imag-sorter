@@ -8,27 +8,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     downloadAllBtn.addEventListener("click", async () => {
         console.log("Клик по кнопке 'Скачать все изображения'");
-        const categoryId = 1; // Здесь вы можете указать пример ID категории или использовать динамически выбранный ID.
+        const pathParts = window.location.pathname.split("/");
+        const categoryId = pathParts[pathParts.length - 2]; 
+          
+        if (!categoryId || isNaN(categoryId)) {
+            console.error("ID категории не найден в URL!");
+            return;
+        }
+        const response = await fetch(`/category/${categoryId}/download`, { method: "GET" });
+        if (response.ok) {
+            console.log("Получен ответ от сервера:", response);
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
 
-        try {
-            const response = await fetch(`/category/${categoryId}/download`, { method: "GET" });
+            // Скачиваем файл
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${categoryId}_images.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
 
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "images.zip";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-
-                console.log("Архив успешно скачан.");
-            } else {
-                console.error("Ошибка скачивания архива. Статус:", response.status);
-            }
-        } catch (error) {
-            console.error("Ошибка сети при скачивании архива:", error);
+            console.log("Файл успешно скачан.");
+        } else {
+            console.error("Ошибка скачивания архива. Статус:", response.status);
         }
     });
 });

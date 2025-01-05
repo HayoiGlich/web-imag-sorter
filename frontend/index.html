@@ -56,6 +56,63 @@
 
       <!-- Folders Section -->
       {% set sorted_folders = folders | sort(attribute='name') %}
+      {% set folder_icons = 
+        {
+          "Amber": "/static/icons/Amber_Icon.webp",
+          "Arlecchino": "/static/icons/Arlecchino_Icon.webp",
+          "Ayaka": "/static/icons/Ayaka_Icon.webp",
+          "Barbara": "/static/icons/Barbara_Icon.webp",
+          "Charlotte": "/static/icons/Charlotte_Icon.webp",
+          "Chevreuse": "/static/icons/Chevreuse_Icon.webp",
+          "Chiori": "/static/icons/Chiori_Icon.webp",
+          "Citlali": "/static/icons/Citlali_Icon.webp",
+          "Clara": "/static/icons/Clara_Icon.webp",
+          "Clorinde": "/static/icons/Clorinde_Icon.webp",
+          "Collei": "/static/icons/Collei_Icon.webp",
+          "Diona": "/static/icons/Diona_Icon.webp",
+          "Eris": "/static/icons/Eris_Icon.webp",
+          "Eula": "/static/icons/Eula_Icon.webp",
+          "Faruzan": "/static/icons/Faruzan_Icon.webp",
+          "Fischl": "/static/icons/Fischl_Icon.webp",
+          "Furina": "/static/icons/Furina_Icon.webp",
+          "Ganyu": "/static/icons/Ganyu_Icon.webp",
+          "HuTao": "/static/icons/HuTao_Icon.webp",
+          "Jean": "/static/icons/Jean_Icon.webp",
+          "Kachina": "/static/icons/Kachina_Icon.webp",
+          "Keqing": "/static/icons/Keqing_Icon.webp",
+          "Kirara": "/static/icons/Kirara_Icon.webp",
+          "Klee": "/static/icons/Klee_Icon.webp",
+          "Kokomi": "/static/icons/Kokomi_Icon.webp",
+          "Kujou Sara": "/static/icons/KujouSara_Icon.webp",
+          "Kukishinobu": "/static/icons/Kukishinobu_Icon.webp",
+          "Layla": "/static/icons/Layla_Icon.webp",
+          "Lynette": "/static/icons/Lynette_Icon.webp",
+          "Lisa": "/static/icons/Lisa_Icon.webp",
+          "Lumine": "/static/icons/Traveler_Icon.webp",
+          "Mavuika": "/static/icons/Mavuika_Icon.webp",
+          "Mash": "/static/icons/Mash_Icon.webp",
+          "Miko": "/static/icons/Yae_Miko_Icon.webp",
+          "Mona": "/static/icons/Mona_Icon.webp",
+          "Nahida": "/static/icons/Nahida_Icon.webp",
+          "Navia": "/static/icons/Navia_Icon.webp",
+          "Nilou": "/static/icons/Nilou_Icon.webp",
+          "Ningguang": "/static/icons/Ningguang_Icon.webp",
+          "Noelle": "/static/icons/Noelle_Icon.webp",
+          "Paimon": "/static/icons/Paimon_Icon.webp",
+          "Qiqi": "/static/icons/Qiqi_Icon.webp",
+          "Raiden": "/static/icons/Raiden_Icon.webp",
+          "Rosaria": "/static/icons/Rosaria_Icon.webp",
+          "Sayu": "/static/icons/Sayu_Icon.webp",
+          "Shenhe": "/static/icons/Shenhe_Icon.webp",
+          "Sovmest" : "/static/icons/Sovmest_Icon.webp",
+          "Sucrose": "/static/icons/Sucrose_Icon.webp",
+          "Xiangling": "/static/icons/Xiangling_Icon.webp",
+          "Yelan": "/static/icons/Yelan_Icon.webp",
+          "Yaoyao": "/static/icons/Yaoyao_Icon.webp",
+          "Yun Jin": "/static/icons/Yun Jin_Icon.webp",
+          "Yoymia": "/static/icons/Yoimiya_Icon.webp"
+        } 
+      %}
       <div id="folders" class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {% if sorted_folders %}
             {% for folder in sorted_folders %}
@@ -63,7 +120,14 @@
                     id="folder-{{ folder.id }}" 
                     class="folder-image-see p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-105">
                     <div class="flex justify-between items-center mb-4">
-                        <p class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ folder.name }}</p>
+                        <!-- Иконка персонажа -->
+                        <div class="flex items-center">
+                            <img 
+                                src="{{ folder_icons.get(folder.name, '/static/icons/default.png') }}" 
+                                alt="{{ folder.name }} Icon" 
+                                class="h-14 w-14 mr-4">
+                            <p class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ folder.name }}</p>
+                        </div>
                         <button type="submit"
                             class="delete-category-btn text-red-600 hover:underline" 
                             data-folder-id="{{ folder.id }}">
@@ -78,8 +142,18 @@
                         <input type="file" multiple class="hidden file-input" />
                     </div>
                     <!-- Отображение количества файлов -->
-                    <p class="text-sm text-gray-600 dark:text-gray-400 image-count mt-4">
-                        Файлов: {{ folder.image_count }}
+                    <p class="text-sm text-gray-600 dark:text-gray-400 image-count mt-4 flex items-center bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h11M9 21H7a4 4 0 01-4-4V9a4 4 0 014-4h6a4 4 0 014 4v2m-3 4h6m-3-3v6"/>
+                        </svg>
+                        {% if folder.image_count == 0 %}
+                            Нет файлов
+                        {% elif folder.image_count == 1 %}
+                            Один файл
+                        {% else %}
+                            <span class="font-medium mr-1">Файлов:</span>
+                            <span class="font-semibold">{{ folder.image_count }}</span>
+                        {% endif %}
                     </p>
                 </div>
             {% endfor %}
@@ -87,9 +161,10 @@
             <p class="text-center text-gray-500 dark:text-gray-400">Папки не найдены</p>
         {% endif %}
       </div>
+
     </main>
   </div>
 
-  <script type="module" src="{{ url_for('static', path='index.js') }}"></script>
+  <script type="module" src="{{ url_for('static', path='js/index.js') }}"></script>
 </body>
 </html>
