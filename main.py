@@ -14,6 +14,10 @@ import base64
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func
 
+# Добавляем фильтр Base64
+def to_base64(value: bytes) -> str:
+    return base64.b64encode(value).decode("utf-8")
+
 # Lifespan для FastAPI
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
@@ -26,9 +30,6 @@ app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 templates = Jinja2Templates(directory='frontend')
 
-# Добавляем фильтр Base64
-def to_base64(value: bytes) -> str:
-    return base64.b64encode(value).decode("utf-8")
 
 # Регистрируем фильтр в Jinja2 через templates.env
 templates.env.filters["to_base64"] = to_base64
@@ -36,28 +37,37 @@ templates.env.filters["to_base64"] = to_base64
 # =====Роуты====
 @app.get('/')
 async def home(request: Request, db: AsyncSession = Depends(get_db_session)):
-    result = await db.execute(select(Category, func.count(Image.id).label("image_count"))
-        .outerjoin(Image, Image.category_id == Category.id)
-        .group_by(Category.id))
+    try:
+        result = await db.execute(
+            select(Category, func.count(Image.id).label("image_count"))
+            .outerjoin(Image, Image.category_id == Category.id)
+            .group_by(Category.id)
+        )
+        
+        categories_with_counts = [
+            {
+                "id": category.id,
+                "name": category.name,
+                "description": category.description,
+                "image_count": image_count,
+            }
+            for category, image_count in result.fetchall()
+        ]
+        
+        await db.commit()  # Явный коммит
+
+        return templates.TemplateResponse(
+            'index.html',
+            {
+                "request": request,
+                "folders": categories_with_counts,
+            }
+        )
+    except Exception as e:
+        print(f"Ошибка при выполнении запроса: {e}")
+        await db.rollback()  # Откат в случае ошибки
+        raise HTTPException(status_code=500, detail="Ошибка выполнения запроса")
     
-    categories_with_counts = [
-        {
-            "id": category.id,
-            "name": category.name,
-            "description": category.description,
-            "image_count": image_count,
-        }
-        for category, image_count in result.all()
-    ]
-
-    return templates.TemplateResponse(
-        'index.html',
-        {
-            "request": request,
-            "folders": categories_with_counts,
-        }
-    )
-
 # Создание категории
 @app.post('/category/')
 async def create_category(name: str = Form(...), description: str = Form(""), db: AsyncSession = Depends(get_db_session)):
@@ -69,6 +79,7 @@ async def create_category(name: str = Form(...), description: str = Form(""), db
     db.add(new_category)
     await db.commit()
     await db.refresh(new_category)
+
     return {"message": "Категория успешно создана", "category_id": new_category.id}
 
 # Загрузка изображения
@@ -107,20 +118,26 @@ async def upload_images(
 # Получение изображений из категории
 @app.get("/category/{category_id}/images")
 async def get_images(category_id: int, request: Request, db: AsyncSession = Depends(get_db_session)):
-    # Запрос к базе данных для получения изображений
-    result = await db.execute(
-        select(Image).where(Image.category_id == category_id).order_by(Image.upload_date.desc()))
-    images = result.unique().scalars().all()
+    try:
+        # Запрос к базе данных для получения изображений
+        result = await db.execute(
+            select(Image).where(Image.category_id == category_id).order_by(Image.upload_date.desc()))
+        images = result.unique().scalars().all()
 
-    if not images:
-        raise HTTPException(status_code=404, detail="Изображения не найдены для этой категории")
-
-    # Передаем данные в шаблон
-    return templates.TemplateResponse("category_images.html", {
-        "request": request,
-        "images": images,
-        "category_id": category_id
-    })
+        if not images:
+            raise HTTPException(status_code=404, detail="Изображения не найдены для этой категории")
+        
+        await db.commit()
+        # Передаем данные в шаблон
+        return templates.TemplateResponse("category_images.html", {
+            "request": request,
+            "images": images,
+            "category_id": category_id
+        })
+        
+    except Exception as e:
+        await db.rollback()  # откат в случае ошибки
+        print(f"Ошибка выполнения запроса: {e}")
 
 # Скачивание изображения
 @app.get("/image/{image_id}/download")

@@ -25,6 +25,7 @@ class Image(Base):
         server_default=func.now(),  # Значение по умолчанию на уровне базы данных
         onupdate=func.now()  # Обновление при изменении строки
     )
+    
     category_id : Mapped[int] = mapped_column(ForeignKey('categories.id', ondelete= 'CASCADE'))
     
     category : Mapped["Category"] = relationship("Category", back_populates="images", order_by="Image.id.desc()")

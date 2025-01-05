@@ -1,5 +1,5 @@
 import asyncio
-from sqlalchemy.ext.asyncio import create_async_engine,AsyncAttrs,async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine,AsyncAttrs,async_sessionmaker,AsyncSession
 from sqlalchemy.orm import Session,sessionmaker, DeclarativeBase
 from sqlalchemy import URL,text
 from backend.config import settings
@@ -13,6 +13,7 @@ engine = create_async_engine(settings.DATABASE_URL_asyncpg, echo=True)
 async_session_maker = async_sessionmaker(
     engine,
     expire_on_commit=False,
+    class_=AsyncSession,
 )
 
 async def get_db_session():
