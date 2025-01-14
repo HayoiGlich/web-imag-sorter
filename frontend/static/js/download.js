@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
 function deleteImage(event, imageId) {
     event.preventDefault();
     if (confirm("Вы уверены, что хотите удалить это изображение?")) {
@@ -50,3 +51,4 @@ function deleteImage(event, imageId) {
             .catch((error) => console.error("Ошибка сети:", error));
     }
 }
+

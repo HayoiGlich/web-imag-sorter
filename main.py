@@ -13,6 +13,7 @@ import io
 import base64
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func
+from fastapi.websockets import WebSocket
 
 # Добавляем фильтр Base64
 def to_base64(value: bytes) -> str:
@@ -33,6 +34,14 @@ templates = Jinja2Templates(directory='frontend')
 
 # Регистрируем фильтр в Jinja2 через templates.env
 templates.env.filters["to_base64"] = to_base64
+
+#======WebSocket========
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text()
 
 # =====Роуты====
 @app.get('/')
@@ -226,6 +235,41 @@ async def delete_category(category_id: int, db: AsyncSession = Depends(get_db_se
     await db.commit()
 
     return {"message": "Категория успешно удалена"}
+
+@app.get("/download-all-categories")
+async def download_all_categories(db: AsyncSession = Depends(get_db_session)):
+    try:
+        # Увеличиваем время выполнения запроса
+        return StreamingResponse(
+            await generate_zip(db),  # Выносим логику в отдельную функцию
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": "attachment; filename=all_categories.zip"
+            }
+        )
+    except Exception as e:
+        print(f"Ошибка при создании архива: {e}")
+        raise HTTPException(status_code=500, detail="Ошибка при создании архива")
+    
+async def generate_zip(db: AsyncSession):
+    categories_result = await db.execute(select(Category))
+    categories = categories_result.scalars().all()
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for category in categories:
+            images_result = await db.execute(select(Image).where(Image.category_id == category.id))
+            images = images_result.scalars().all()
+
+            if images:
+                category_folder = f"{category.name}/"
+                zip_file.writestr(category_folder, "")
+
+                for image in images:
+                    zip_file.writestr(f"{category_folder}{image.filename}", image.content)
+
+    zip_buffer.seek(0)
+    return zip_buffer
 
 # Запуск приложения
 if __name__ == "__main__":
