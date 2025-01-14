@@ -13,7 +13,7 @@ import io
 import base64
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func
-from fastapi.websockets import WebSocket
+
 
 # Добавляем фильтр Base64
 def to_base64(value: bytes) -> str:
@@ -34,14 +34,6 @@ templates = Jinja2Templates(directory='frontend')
 
 # Регистрируем фильтр в Jinja2 через templates.env
 templates.env.filters["to_base64"] = to_base64
-
-#======WebSocket========
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        await websocket.send_text()
 
 # =====Роуты====
 @app.get('/')
