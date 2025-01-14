@@ -99,6 +99,14 @@ async def upload_images(
     uploaded_images = []
     
     for image in images:
+        # Проверка на существования изображения с таким же именем
+        existing_image = await db.execute(select(Image).where(Image.filename == image.filename))
+        existing_image = existing_image.unique().scalar_one_or_none()
+        
+        if existing_image:
+            raise HTTPException(status_code=409, detail=f"Изображение с именем '{image.filename}' уже существует")
+            
+
         # Чтение содержимого файла
         image_data = await image.read()
 
