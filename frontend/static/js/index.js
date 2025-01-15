@@ -3,6 +3,7 @@ import { initializeFileUpload } from "./file_upload.js";
 import { initializeCategories } from "./categories.js";
 import { initializeDownloadsAll } from "./downloadall.js";
 import { initializeSearchCategories } from "./search.js";
+
 document.addEventListener("DOMContentLoaded", () => {
     // Инициализация модулей
     //initializeWebSocket();
@@ -10,5 +11,4 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeCategories();
     initializeDownloadsAll();
     initializeSearchCategories();
-
 });

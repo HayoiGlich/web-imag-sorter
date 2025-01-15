@@ -52,3 +52,23 @@ function deleteImage(event, imageId) {
     }
 }
 
+// Функция для открытия модального окна с изображением
+function openImageModal(imageSrc) {
+    const modal = document.getElementById('image-modal');
+    const modalImage = document.getElementById('modal-image');
+    modalImage.src = imageSrc;
+    modal.classList.remove('hidden');
+}
+
+// Функция для закрытия модального окна
+function closeImageModal() {
+    const modal = document.getElementById('image-modal');
+    modal.classList.add('hidden');
+}
+
+// Закрытие модального окна при клике вне изображения
+document.getElementById('image-modal').addEventListener('click', (event) => {
+    if (event.target === document.getElementById('image-modal')) {
+        closeImageModal();
+    }
+});

@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.responses import StreamingResponse
+from sqlalchemy.future import select
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.model import Category, Image
@@ -10,10 +11,12 @@ from starlette.templating import Jinja2Templates
 import uvicorn
 import zipfile
 import io
+import asyncio
 import base64
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func
-
+from concurrent.futures import ThreadPoolExecutor
+import time
 
 # Добавляем фильтр Base64
 def to_base64(value: bytes) -> str:
@@ -231,35 +234,54 @@ async def delete_category(category_id: int, db: AsyncSession = Depends(get_db_se
 @app.get("/download-all-categories")
 async def download_all_categories(db: AsyncSession = Depends(get_db_session)):
     try:
-        # Увеличиваем время выполнения запроса
+        # Используем потоковую передачу файла для снижения нагрузки на память
+        zip_file = await generate_zip(db)        
         return StreamingResponse(
-            await generate_zip(db),  # Выносим логику в отдельную функцию
+            zip_file,
             media_type="application/zip",
-            headers={
-                "Content-Disposition": "attachment; filename=all_categories.zip"
-            }
+            headers={"Content-Disposition": "attachment; filename=all_categories.zip"}
         )
     except Exception as e:
         print(f"Ошибка при создании архива: {e}")
         raise HTTPException(status_code=500, detail="Ошибка при создании архива")
     
 async def generate_zip(db: AsyncSession):
-    categories_result = await db.execute(select(Category))
-    categories = categories_result.scalars().all()
+    # Загружаем все данные одним запросом
+    start_time = time.time()
+    categories_with_images = await db.execute(
+        select(Category, Image)
+        .join(Image, Category.id == Image.category_id, isouter=True)
+    )
+    end_time = time.time()
+    print(f"Загрузка всех данных заняла {end_time - start_time:.2f} секунд")
+
+    data = categories_with_images.fetchall()  #Выгрузка всех данных
+
+
+    grouped_data = {}
+    for category, image in data:
+        if category not in grouped_data:
+            grouped_data[category] = []
+        if image:
+            grouped_data[category].append(image)
 
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for category in categories:
-            images_result = await db.execute(select(Image).where(Image.category_id == category.id))
-            images = images_result.scalars().all()
 
-            if images:
-                category_folder = f"{category.name}/"
-                zip_file.writestr(category_folder, "")
+    # Создаем ZIP-файл
+    start_time = time.time()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_STORED) as zip_file:
+        async def process_category(category, images):
+            category_folder = f"{category.name}/"
+            zip_file.writestr(category_folder, "")
+            for image in images:
+                zip_file.writestr(f"{category_folder}{image.filename}", image.content)
 
-                for image in images:
-                    zip_file.writestr(f"{category_folder}{image.filename}", image.content)
-
+        # Асинхронно обрабатываем категории
+        await asyncio.gather(
+            *(process_category(category, images) for category, images in grouped_data.items())
+        )
+    end_time = time.time()
+    print(f"Создание архива заняло: {end_time - start_time} секунд")
     zip_buffer.seek(0)
     return zip_buffer
 

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Изображения категории</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50 transition-colors duration-300">
 
@@ -28,9 +29,11 @@
             <div id="image-{{ image.id }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300">
                 <!-- Отображение изображения с сохранением пропорций -->
                 <div class="relative w-full h-64 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
-                    <img src="data:image/{{ image.mime_type }};base64,{{ image.content | to_base64 }}" 
-                         alt="{{ image.filename }}" 
-                         class="absolute inset-0 w-full h-full object-contain" />
+                    <a href="#" onclick="openImageModal('data:image/{{ image.mime_type }};base64,{{ image.content | to_base64 }}')">
+                        <img src="data:image/{{ image.mime_type }};base64,{{ image.content | to_base64 }}" 
+                             alt="{{ image.filename }}" 
+                             class="absolute inset-0 w-full h-full object-contain" />
+                    </a>
                 </div>
                 <p class="text-center text-gray-700 dark:text-gray-300 text-lg">{{ image.filename }}</p>
                 
@@ -51,8 +54,17 @@
             <p class="text-center text-gray-500 dark:text-gray-400 col-span-3">Нет изображений в этой категории</p>
             {% endfor %}
         </div>
-        
+        <!-- Модальное окно для просмотра изображения -->
+        <div id="image-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-75 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-[90vw] max-h-[90vh] w-auto h-auto overflow-auto relative">
+                <img id="modal-image" src="" alt="" class="w-full h-auto max-w-full max-h-[80vh] object-contain">
+                <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white bg-red-500 hover:bg-red-600 rounded-full p-2">
+                    &times;
+                </button>
+            </div>
+        </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
 
     <script src="{{ url_for('static', path='js/download.js') }}"></script>
 </body>
